@@ -7,11 +7,14 @@ import java.time.Instant;
 
 public class ThreadPerClientServer extends Server {
 
-    private int PORT = 8080;
+    private ServerSocket serverSocket;
+
+    public ThreadPerClientServer(int port) {
+        super(port);
+    }
 
     @Override
     public void run() {
-        ServerSocket serverSocket;
         try {
             serverSocket = new ServerSocket(PORT);
         } catch (IOException e) {
@@ -31,6 +34,15 @@ public class ThreadPerClientServer extends Server {
             ClientRequestHandler handler = new ClientRequestHandler(socket, stat, gotRequestTime);
             Thread handlerThread = new Thread(handler);
             handlerThread.start();
+        }
+    }
+
+    @Override
+    public void stop() {
+        try {
+            serverSocket.close();
+        } catch (IOException e) {
+            System.out.println("Failed to close server socket");
         }
     }
 }

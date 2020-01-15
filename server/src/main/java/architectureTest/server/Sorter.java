@@ -4,12 +4,14 @@ import java.util.Collections;
 import java.util.List;
 
 public class Sorter {
-    static void sort(List<Long> elems) {
-        int numElems = elems.size();
+    static void sort(Long[] elems) {
+        int numElems = elems.length;
         for (int i = numElems - 1; numElems >= 0; numElems--) {
-            for (int j = 1; j <= i; j++) {
-                if (elems.get(i) > elems.get(j)) {
-                    Collections.swap(elems, i, j);
+            for (int j = 0; j <= i; j++) {
+                if (elems[j] > elems[i]) {
+                    Long tmp = elems[i];
+                    elems[i] = elems[j];
+                    elems[j] = tmp;
                 }
             }
         }
