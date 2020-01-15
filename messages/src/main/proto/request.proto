@@ -1,0 +1,6 @@
+package architectureTest.protobuf;
+
+message Request {
+    required int32 code = 1;
+    repeated int64 elems = 2;
+}

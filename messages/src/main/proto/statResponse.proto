@@ -1,0 +1,6 @@
+package architectureTest.protobuf;
+
+message StatResponse {
+    required double sortAvg = 1;
+    required double processAvg = 2;
+}
