@@ -8,6 +8,7 @@ import java.io.*;
 import java.net.Socket;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.List;
 
 public class ClientRequestHandler implements Runnable {
@@ -27,14 +28,14 @@ public class ClientRequestHandler implements Runnable {
     private void processArraySortingRequest(Request request) throws IOException {
         List<Long> elemsList = request.getElemsList();
         Instant startSorting = Instant.now();
-        Long[] elemsArray = elemsList.toArray(new Long[elemsList.size()]);
+        Long[] elemsArray = elemsList.toArray(new Long[0]);
         Sorter.sort(elemsArray);
         Instant endSorting = Instant.now();
         if (!stat.finish) {
             stat.sortTimes.add(Duration.between(startSorting, endSorting));
         }
 
-        Network.sendArray(socket, elemsList);
+        Network.sendArray(socket, Arrays.asList(elemsArray));
         Instant endProcess = Instant.now();
         if (!stat.finish) {
             stat.processTimes.add(Duration.between(startProcess, endProcess));
@@ -52,13 +53,16 @@ public class ClientRequestHandler implements Runnable {
 
     @Override
     public void run() {
-        while (socket.isConnected()) {
+        while (true) {
             Request request;
             try {
                 request = Network.parseRequest(socket);
+                if (request == null) {
+                    break;
+                }
             } catch (IOException e) {
                 System.out.println("Failed to handle request input");
-                return;
+                break;
             }
 
             int code = request.getCode();
@@ -78,6 +82,11 @@ public class ClientRequestHandler implements Runnable {
             } catch (IOException e) {
                 System.out.println("Failed to write to socket");
             }
+        }
+        try {
+            socket.close();
+        } catch (IOException e) {
+            System.out.println("Failed to close socket");
         }
     }
 }

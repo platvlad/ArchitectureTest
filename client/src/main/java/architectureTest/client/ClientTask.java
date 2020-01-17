@@ -42,32 +42,30 @@ public class ClientTask implements Runnable {
         int numRequests = params.getNumRequests();
         String host = params.getServerIP();
         int port = params.getPort();
-        Socket socket;
-        try {
-            socket = new Socket(host, port);
+        try (Socket socket = new Socket(host, port)) {
+            int listSize = params.getNumElems();
+            long waitTime = params.getDelta();
+            for (int i = 0; i < numRequests; i++) {
+                try {
+                    genSortArray(socket, listSize);
+                } catch (IOException e) {
+                    return;
+                }
+                try {
+                    Thread.sleep(waitTime);
+                } catch (InterruptedException e) {
+                    return;
+                }
+            }
+            try {
+                Network.sendFinishSign(socket);
+                Network.parseRequest(socket);
+            } catch (IOException e) {
+                System.out.println("Failed to send finish sign");
+            }
         } catch (IOException e) {
             System.out.println("Failed to connect to " + host);
-            return;
         }
-        int listSize = params.getNumElems();
-        long waitTime = params.getDelta();
-        for (int i = 0; i < numRequests; i++) {
-            try {
-                genSortArray(socket, listSize);
-            } catch (IOException e) {
-                return;
-            }
-            try {
-                Thread.sleep(waitTime);
-            } catch (InterruptedException e) {
-                return;
-            }
-        }
-        try {
-            Network.sendFinishSign(socket);
-            Network.parseRequest(socket);
-        } catch (IOException e) {
-            System.out.println("Failed to send finish sign");
-        }
+
     }
 }

@@ -28,12 +28,18 @@ public class Network {
     public static Request parseRequest(Socket socket) throws IOException {
         Request request;
         InputStream input = socket.getInputStream();
-        ObjectInputStream objectInput = new ObjectInputStream(input);
+        PushbackInputStream pushBackInput = new PushbackInputStream(input);
+        int bytes = pushBackInput.read();
+        if (bytes == -1) {
+            return null;
+        }
+        pushBackInput.unread(bytes);
+        ObjectInputStream objectInput = new ObjectInputStream(pushBackInput);
         int messageSize = objectInput.readInt();
         byte[] message = new byte[messageSize];
         int offset = 0;
         while (offset < messageSize) {
-            int readBytes = input.read(message, offset, messageSize - offset);
+            int readBytes = pushBackInput.read(message, offset, messageSize - offset);
             offset += readBytes;
         }
         request = Request.parseFrom(message);
