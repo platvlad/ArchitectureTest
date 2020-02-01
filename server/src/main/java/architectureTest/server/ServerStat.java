@@ -1,5 +1,8 @@
 package architectureTest.server;
 
+import architectureTest.protobuf.RequestOuterClass.Request;
+import architectureTest.protobuf.StatResponseOuterClass.StatResponse;
+
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -24,6 +27,21 @@ public class ServerStat {
 
     private double getAvg(List<Duration> lst) {
         return lst.stream().map(Duration::toMillis).mapToLong(Long::longValue).average().orElse(0);
+    }
+
+    public StatResponse buildResponse() {
+        StatResponse.Builder responseBuilder = StatResponse.newBuilder();
+        responseBuilder.setSortAvg(getAvgSortTime());
+        responseBuilder.setSortAvg(getAvgProcessTime());
+        return responseBuilder.build();
+    }
+
+    public Request setFinishFlag() {
+        finish = true;
+        Request.Builder requestBuilder = Request.newBuilder();
+        requestBuilder.setCode(0);
+        requestBuilder.addAllElems(new ArrayList<>());
+        return requestBuilder.build();
     }
 
 }

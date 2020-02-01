@@ -1,5 +1,7 @@
 package architectureTest.server;
 
+import architectureTest.server.tasksPool.TasksPoolServer;
+import architectureTest.server.threadPerClient.ThreadPerClientServer;
 import org.apache.commons.cli.ParseException;
 
 import java.util.Scanner;
@@ -29,7 +31,7 @@ public class Main {
                 server = new ThreadPerClientServer(port);
                 break;
             case TASKS_POOL:
-                server = new ThreadPerClientServer(port);
+                server = new TasksPoolServer(port);
                 break;
             default:
                 server = new ThreadPerClientServer(port);

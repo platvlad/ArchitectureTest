@@ -16,12 +16,16 @@ public class Network {
         output.flush();
     }
 
-    public static void sendArray(Socket socket, List<Long> elems) throws IOException {
-        OutputStream output = socket.getOutputStream();
+    public static Request packArray(List<Long> elems) {
         Request.Builder responseBuilder = Request.newBuilder();
         responseBuilder.setCode(2);
         responseBuilder.addAllElems(elems);
-        Request response = responseBuilder.build();
+        return responseBuilder.build();
+    }
+
+    public static void sendArray(Socket socket, List<Long> elems) throws IOException {
+        OutputStream output = socket.getOutputStream();
+        Request response = packArray(elems);
         sendMessage(response, output);
     }
 

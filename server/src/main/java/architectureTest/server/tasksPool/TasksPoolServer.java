@@ -1,15 +1,14 @@
-package architectureTest.server;
+package architectureTest.server.tasksPool;
+
+import architectureTest.server.Server;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.time.Instant;
 
-public class ThreadPerClientServer extends Server {
+public class TasksPoolServer extends Server {
 
-    private ServerSocket serverSocket;
-
-    public ThreadPerClientServer(int port) {
+    public TasksPoolServer(int port) {
         super(port);
     }
 
@@ -23,26 +22,20 @@ public class ThreadPerClientServer extends Server {
         }
         while (true) {
             Socket socket;
-            Instant gotRequestTime;
             try {
                 socket = serverSocket.accept();
-                gotRequestTime = Instant.now();
             } catch (IOException e) {
-                System.out.println("Failed to accept connection");
-                return;
+                break;
             }
-            ClientRequestHandler handler = new ClientRequestHandler(socket, stat, gotRequestTime);
+            ClientHandler handler = new ClientHandler(socket, stat);
             Thread handlerThread = new Thread(handler);
             handlerThread.start();
         }
-    }
-
-    @Override
-    public void stop() {
         try {
             serverSocket.close();
         } catch (IOException e) {
-            System.out.println("Failed to close server socket");
+            System.out.println("Failed to close socket");
         }
     }
+
 }

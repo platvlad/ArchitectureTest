@@ -1,8 +1,10 @@
-package architectureTest.server;
+package architectureTest.server.threadPerClient;
 
 import ArchitectureTest.utils.Network;
 import architectureTest.protobuf.RequestOuterClass.Request;
 import architectureTest.protobuf.StatResponseOuterClass.StatResponse;
+import architectureTest.server.ServerStat;
+import architectureTest.server.Sorter;
 
 import java.io.*;
 import java.net.Socket;
@@ -11,21 +13,18 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 
-public class ClientRequestHandler implements Runnable {
+public class ClientHandler implements Runnable {
 
     private Socket socket;
 
     private ServerStat stat;
 
-    private Instant startProcess;
-
-    public ClientRequestHandler(Socket socket, ServerStat stat, Instant gotRequest) {
+    public ClientHandler(Socket socket, ServerStat stat) {
         this.socket = socket;
         this.stat = stat;
-        startProcess = gotRequest;
     }
 
-    private void processArraySortingRequest(Request request) throws IOException {
+    private void processArraySortingRequest(Request request, Instant startProcess) throws IOException {
         List<Long> elemsList = request.getElemsList();
         Instant startSorting = Instant.now();
         Long[] elemsArray = elemsList.toArray(new Long[0]);
@@ -64,19 +63,21 @@ public class ClientRequestHandler implements Runnable {
                 System.out.println("Failed to handle request input");
                 break;
             }
+            Instant startProcess = Instant.now();
 
             int code = request.getCode();
             try {
                 switch (code) {
                     case 0:
-                        stat.finish = true;
-                        Network.sendFinishSign(socket);
+                        Request toSend = stat.setFinishFlag();
+                        Network.sendMessage(toSend, socket.getOutputStream());
                         break;
                     case 1:
-                        processStatRequest();
+                        StatResponse response = stat.buildResponse();
+                        Network.sendMessage(response, socket.getOutputStream());
                         break;
                     case 2:
-                        processArraySortingRequest(request);
+                        processArraySortingRequest(request, startProcess);
                         break;
                 }
             } catch (IOException e) {
