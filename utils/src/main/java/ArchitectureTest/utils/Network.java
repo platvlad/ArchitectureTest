@@ -8,10 +8,24 @@ import architectureTest.protobuf.RequestOuterClass.Request;
 import com.google.protobuf.Message;
 
 public class Network {
+    public static byte[] intToByteArray(int value) {
+        return new byte[] {
+                (byte)(value >> 24),
+                (byte)(value >> 16),
+                (byte)(value >> 8),
+                (byte)value };
+    }
+
+    public static int byteArrayToInt(byte[] bytes) {
+        return ((bytes[0] & 0xFF) << 24) |
+                ((bytes[1] & 0xFF) << 16) |
+                ((bytes[2] & 0xFF) << 8 ) |
+                ((bytes[3] & 0xFF));
+    }
+
     public static void sendMessage(Message msg, OutputStream output) throws IOException {
-        ObjectOutputStream objectOutput = new ObjectOutputStream(output);
-        objectOutput.writeInt(msg.getSerializedSize());
-        objectOutput.flush();
+        byte[] sizeBytes = intToByteArray(msg.getSerializedSize());
+        output.write(sizeBytes);
         msg.writeTo(output);
         output.flush();
     }
@@ -29,6 +43,16 @@ public class Network {
         sendMessage(response, output);
     }
 
+    private static byte[] readToByteArray(InputStream input, int size) throws IOException {
+        byte[] result = new byte[size];
+        int offset = 0;
+        while (offset < size) {
+            int readBytes = input.read(result, offset, size - offset);
+            offset += readBytes;
+        }
+        return result;
+    }
+
     public static Request parseRequest(Socket socket) throws IOException {
         Request request;
         InputStream input = socket.getInputStream();
@@ -38,14 +62,10 @@ public class Network {
             return null;
         }
         pushBackInput.unread(bytes);
-        ObjectInputStream objectInput = new ObjectInputStream(pushBackInput);
-        int messageSize = objectInput.readInt();
-        byte[] message = new byte[messageSize];
-        int offset = 0;
-        while (offset < messageSize) {
-            int readBytes = pushBackInput.read(message, offset, messageSize - offset);
-            offset += readBytes;
-        }
+        byte[] messageSizeBytes = readToByteArray(pushBackInput, 4);
+        int messageSize = byteArrayToInt(messageSizeBytes);
+
+        byte[] message = readToByteArray(pushBackInput, messageSize);
         request = Request.parseFrom(message);
         return request;
     }

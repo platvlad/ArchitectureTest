@@ -1,9 +1,11 @@
 package architectureTest.client;
 
 import ArchitectureTest.utils.Network;
+import architectureTest.protobuf.RequestOuterClass.Request;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
@@ -18,7 +20,32 @@ public class ClientTask implements Runnable {
 
     private List<Long> generateList(int size) {
         Random random = new Random();
-        return random.longs().limit(size).boxed().collect(Collectors.toList());
+        return random.longs().limit(size).boxed().map(x -> x % 100).collect(Collectors.toList());
+    }
+
+    private void checkAnswer(List<Long> elems, Request answer) {
+        if (answer == null) {
+            System.out.println(false);
+            return;
+        }
+        elems.sort(Long::compareTo);
+        List<Long> answerList = answer.getElemsList();
+
+        boolean correct = elems.size() == answerList.size();
+        if (!correct) {
+            System.out.println(false);
+            return;
+        }
+        Iterator<Long> elemsIter = elems.iterator();
+        Iterator<Long> answerIter = answerList.iterator();
+        while (elemsIter.hasNext()) {
+            long elem = elemsIter.next();
+            long answerElem = answerIter.next();
+            if (elem != answerElem) {
+                correct = false;
+            }
+        }
+        System.out.println(correct);
     }
 
     private void genSortArray(Socket socket, int listSize) throws IOException {
@@ -30,7 +57,8 @@ public class ClientTask implements Runnable {
             throw e;
         }
         try {
-            Network.parseRequest(socket);
+            Request result = Network.parseRequest(socket);
+            checkAnswer(elems, result);
         } catch (IOException e) {
             System.out.println("Failed to get sort results");
             throw e;

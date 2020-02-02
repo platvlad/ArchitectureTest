@@ -11,6 +11,10 @@ public class Main {
             return;
         }
         ClientTask task = new ClientTask(parameters);
+        for (int i = 0; i < 10; ++i) {
+            Thread thread = new Thread(task);
+            thread.start();
+        }
         task.run();
     }
 }

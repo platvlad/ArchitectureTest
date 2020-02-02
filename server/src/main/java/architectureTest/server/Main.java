@@ -1,5 +1,6 @@
 package architectureTest.server;
 
+import architectureTest.server.nonBlocking.NonBlockingServer;
 import architectureTest.server.tasksPool.TasksPoolServer;
 import architectureTest.server.threadPerClient.ThreadPerClientServer;
 import org.apache.commons.cli.ParseException;
@@ -34,7 +35,7 @@ public class Main {
                 server = new TasksPoolServer(port);
                 break;
             default:
-                server = new ThreadPerClientServer(port);
+                server = new NonBlockingServer(port);
                 break;
         }
         Thread serverThread = new Thread(server);

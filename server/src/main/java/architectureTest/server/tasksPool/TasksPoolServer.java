@@ -27,9 +27,11 @@ public class TasksPoolServer extends Server {
             } catch (IOException e) {
                 break;
             }
-            ClientHandler handler = new ClientHandler(socket, stat);
-            Thread handlerThread = new Thread(handler);
-            handlerThread.start();
+            if (socket != null) {
+                ClientHandler handler = new ClientHandler(socket, stat);
+                Thread handlerThread = new Thread(handler);
+                handlerThread.start();
+            }
         }
         try {
             serverSocket.close();
