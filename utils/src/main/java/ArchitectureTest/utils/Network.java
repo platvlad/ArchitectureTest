@@ -5,6 +5,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 import architectureTest.protobuf.RequestOuterClass.Request;
+import architectureTest.protobuf.StatResponseOuterClass.StatResponse;
 import com.google.protobuf.Message;
 
 public class Network {
@@ -70,6 +71,23 @@ public class Network {
         return request;
     }
 
+    public static StatResponse parseStatResponse(Socket socket) throws IOException {
+        StatResponse response;
+        InputStream input = socket.getInputStream();
+        PushbackInputStream pushBackInput = new PushbackInputStream(input);
+        int bytes = pushBackInput.read();
+        if (bytes == -1) {
+            return null;
+        }
+        pushBackInput.unread(bytes);
+        byte[] messageSizeBytes = readToByteArray(pushBackInput, 4);
+        int messageSize = byteArrayToInt(messageSizeBytes);
+
+        byte[] message = readToByteArray(pushBackInput, messageSize);
+        response = StatResponse.parseFrom(message);
+        return response;
+    }
+
     public static void sendFinishSign(Socket socket) throws IOException {
         OutputStream output = socket.getOutputStream();
         Request.Builder requestBuilder = Request.newBuilder();
@@ -78,4 +96,5 @@ public class Network {
         Request request = requestBuilder.build();
         sendMessage(request, output);
     }
+
 }

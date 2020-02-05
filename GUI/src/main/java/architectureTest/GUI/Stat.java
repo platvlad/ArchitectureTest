@@ -1,0 +1,36 @@
+package architectureTest.GUI;
+
+public class Stat {
+    public double avgSortTime;
+    public double avgProcessTime;
+    public double avgClientTime;
+
+    public String architecture;
+    public int numRequests;
+    public int numElements;
+    public int numClients;
+    public int delta;
+    public int step;
+
+    public double getAvgSortTimes() {
+        return avgSortTime;
+    }
+    public double getAvgProcessTime() {
+        return avgProcessTime;
+    }
+
+    public double getAvgClientTime() {
+        return avgClientTime;
+    }
+
+    public String getFloatingParam(Stat other) {
+        if (numElements != other.numElements) {
+            return "Number of elements";
+        }
+        if (numClients != other.numClients) {
+            return "Number of clients";
+        }
+        return "delta";
+    }
+
+}

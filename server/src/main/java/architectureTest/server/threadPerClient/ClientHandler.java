@@ -41,15 +41,6 @@ public class ClientHandler implements Runnable {
         }
     }
 
-    private void processStatRequest() throws IOException {
-        StatResponse.Builder responseBuilder = StatResponse.newBuilder();
-        responseBuilder.setSortAvg(stat.getAvgSortTime());
-        responseBuilder.setSortAvg(stat.getAvgProcessTime());
-        StatResponse response = responseBuilder.build();
-        OutputStream output = socket.getOutputStream();
-        Network.sendMessage(response, output);
-    }
-
     @Override
     public void run() {
         while (true) {

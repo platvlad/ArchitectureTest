@@ -32,7 +32,7 @@ public class ServerStat {
     public StatResponse buildResponse() {
         StatResponse.Builder responseBuilder = StatResponse.newBuilder();
         responseBuilder.setSortAvg(getAvgSortTime());
-        responseBuilder.setSortAvg(getAvgProcessTime());
+        responseBuilder.setProcessAvg(getAvgProcessTime());
         return responseBuilder.build();
     }
 

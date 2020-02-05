@@ -5,6 +5,9 @@ import architectureTest.protobuf.RequestOuterClass.Request;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
@@ -13,6 +16,10 @@ import java.util.stream.Collectors;
 public class ClientTask implements Runnable {
 
     private ClientParameters params;
+
+    private volatile double avgRequestTime;
+
+    private List<Duration> durations = new ArrayList<>();
 
     public ClientTask(ClientParameters params) {
         this.params = params;
@@ -50,6 +57,7 @@ public class ClientTask implements Runnable {
 
     private void genSortArray(Socket socket, int listSize) throws IOException {
         List<Long> elems = generateList(listSize);
+        Instant start = Instant.now();
         try {
             Network.sendArray(socket, elems);
         } catch (IOException e) {
@@ -58,11 +66,12 @@ public class ClientTask implements Runnable {
         }
         try {
             Request result = Network.parseRequest(socket);
-            checkAnswer(elems, result);
         } catch (IOException e) {
             System.out.println("Failed to get sort results");
             throw e;
         }
+        Instant end = Instant.now();
+        durations.add(Duration.between(start, end));
     }
 
     @Override
@@ -85,6 +94,7 @@ public class ClientTask implements Runnable {
                     return;
                 }
             }
+            avgRequestTime = durations.stream().mapToDouble(Duration::toMillis).average().orElse(0);
             try {
                 Network.sendFinishSign(socket);
                 Network.parseRequest(socket);
@@ -94,6 +104,9 @@ public class ClientTask implements Runnable {
         } catch (IOException e) {
             System.out.println("Failed to connect to " + host);
         }
+    }
 
+    public double getAvgRequestTime() {
+        return avgRequestTime;
     }
 }

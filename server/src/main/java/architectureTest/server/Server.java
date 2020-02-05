@@ -7,7 +7,6 @@ import architectureTest.server.threadPerClient.ThreadPerClientServer;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.AbstractMap;
-import java.util.HashMap;
 import java.util.Map;
 
 public abstract class Server implements Runnable {
@@ -49,6 +48,6 @@ public abstract class Server implements Runnable {
         }
         Thread serverThread = new Thread(server);
         serverThread.start();
-        return new AbstractMap.SimpleEntry<Server, Thread>(server, serverThread);
+        return new AbstractMap.SimpleEntry<>(server, serverThread);
     }
 }

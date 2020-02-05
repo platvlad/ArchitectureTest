@@ -2,7 +2,6 @@ package architectureTest.GUI;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.event.ActionEvent;
 
 public class ParametersCard extends JPanel {

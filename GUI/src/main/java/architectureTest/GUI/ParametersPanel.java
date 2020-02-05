@@ -13,7 +13,7 @@ public class ParametersPanel extends JPanel {
         super();
         config = cfg;
         JPanel cards = new JPanel(new CardLayout());
-        JPanel comboBoxPane = new JPanel(); //use FlowLayout
+        JPanel comboBoxPane = new JPanel();
         String[] comboBoxItems = { "Number of elements", "Number of clients", "delta" };
         JComboBox<String> cb = new JComboBox<>(comboBoxItems);
         cb.setEditable(false);
