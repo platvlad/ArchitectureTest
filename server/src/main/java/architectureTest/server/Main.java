@@ -5,7 +5,10 @@ import architectureTest.server.tasksPool.TasksPoolServer;
 import architectureTest.server.threadPerClient.ThreadPerClientServer;
 import org.apache.commons.cli.ParseException;
 
+import java.util.Map;
 import java.util.Scanner;
+
+import static architectureTest.server.Server.startServer;
 
 public class Main {
     public static void waitQuit() {
@@ -25,22 +28,10 @@ public class Main {
         } catch (ParseException e) {
             return;
         }
-        int port = params.getPort();
-        Server server;
-        switch (params.getArchitecture()) {
-            case THREAD_PER_CLIENT:
-                server = new ThreadPerClientServer(port);
-                break;
-            case TASKS_POOL:
-                server = new TasksPoolServer(port);
-                break;
-            default:
-                server = new NonBlockingServer(port);
-                break;
-        }
-        Thread serverThread = new Thread(server);
-        serverThread.start();
+        Map.Entry<Server, Thread> serverThreadEntry = startServer(params);
+        Server server = serverThreadEntry.getKey();
+        Thread thread = serverThreadEntry.getValue();
         waitQuit();
-        server.stop();
+        server.stop(thread);
     }
 }

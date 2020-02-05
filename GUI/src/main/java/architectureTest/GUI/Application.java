@@ -1,6 +1,7 @@
 package architectureTest.GUI;
 
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
@@ -10,7 +11,7 @@ import javax.swing.*;
 public class Application {
     private ExecutorService uiThreadPool = Executors.newSingleThreadExecutor();
     private ExecutorService workThreadPool = Executors.newFixedThreadPool(4);
-    Configuration config = new Configuration();
+    final Configuration config = new Configuration();
 
     private JComboBox<String> createArchitectureComboBox() {
         String[] architectures = {"Thread per client", "Tasks pool", "Non-blocking"};
@@ -35,11 +36,31 @@ public class Application {
             JPanel centerPanel = new ParametersPanel(config);
             frame.add(centerPanel, BorderLayout.WEST);
 
-            StartButtonPanel buttonPanel = new StartButtonPanel();
+            JPanel buttonPanel = addButtonPanel();
             frame.add(buttonPanel, BorderLayout.SOUTH);
             frame.setVisible(true);
 
         });
+    }
+
+    private JPanel addButtonPanel() {
+        JPanel buttonPanel = new JPanel();
+        JButton button = new JButton("Test");
+        button.addActionListener((ActionEvent evt) -> {
+            String archType;
+            String floatingParam;
+            ExperimentConfiguration expConfig;
+            synchronized (config) {
+                archType = config.getArchitectureType();
+                floatingParam = config.getFloatingParam();
+                expConfig = config.getCurrentExperiment();
+            }
+            workThreadPool.submit(() -> expConfig.runExperiment(archType, floatingParam));
+        });
+        buttonPanel.add(button);
+        JLabel label = new JLabel();
+        buttonPanel.add(label);
+        return buttonPanel;
     }
 
     public void stopApplication() {

@@ -3,6 +3,7 @@ package architectureTest.GUI;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
+import java.util.Objects;
 
 public class ParametersPanel extends JPanel {
 
@@ -19,7 +20,9 @@ public class ParametersPanel extends JPanel {
         cb.addItemListener((ItemEvent e) -> {
             CardLayout layout = (CardLayout) cards.getLayout();
             layout.show(cards, (String) e.getItem());
+            config.setFloatingParam((String) e.getItem());
         });
+        config.setFloatingParam(Objects.requireNonNull(cb.getSelectedItem()).toString());
         comboBoxPane.add(cb);
 
         String[] parameterNames = new String[comboBoxItems.length + 1];

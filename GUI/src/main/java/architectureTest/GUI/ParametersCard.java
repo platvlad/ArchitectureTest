@@ -24,9 +24,9 @@ public class ParametersCard extends JPanel {
         config.addParamExperiment(floatingParameter);
         this.minValue = minValue;
         this.maxValue = maxValue;
+        config.addParameter(floatingParameter, floatingParameter);
         createSlider(floatingParameter, SliderType.MIN);
         createSlider(floatingParameter, SliderType.MAX);
-        config.addParameter(floatingParameter, floatingParameter);
         createTextField(floatingParameter, true);
         int numElems = 3;
         for (String paramName: parameterNames) {
@@ -71,6 +71,13 @@ public class ParametersCard extends JPanel {
         sliderTextPanel.setLayout(new BoxLayout(sliderTextPanel,  BoxLayout.Y_AXIS));
         JLabel valueText = new JLabel();
         valueText.setText(Integer.toString(slider.getValue()));
+        int sliderInitValue = (minValue + maxValue) / 2;
+        slider.setValue(sliderInitValue);
+        if (type.equals(SliderType.MIN)) {
+            config.setMinParameter(floatingParameter, paramName, sliderInitValue);
+        } else {
+            config.setMaxParameter(floatingParameter, paramName, sliderInitValue);
+        }
         slider.addChangeListener((ChangeEvent e) -> {
             int sliderValue = slider.getValue();
             valueText.setText(Integer.toString(sliderValue));

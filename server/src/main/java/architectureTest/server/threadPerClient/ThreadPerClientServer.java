@@ -5,7 +5,6 @@ import architectureTest.server.Server;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.time.Instant;
 
 public class ThreadPerClientServer extends Server {
 
@@ -21,7 +20,7 @@ public class ThreadPerClientServer extends Server {
             System.out.println("Failed to create socket on port " + PORT);
             return;
         }
-        while (true) {
+        while (!serverSocket.isClosed()) {
             Socket socket;
             try {
                 socket = serverSocket.accept();
