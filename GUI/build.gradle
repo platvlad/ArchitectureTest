@@ -7,6 +7,15 @@ version '1.0-SNAPSHOT'
 
 sourceCompatibility = 1.8
 
+task guiJar(type: Jar) {
+    manifest {
+        attributes 'Main-Class': 'architectureTest.GUI.Main'
+    }
+    baseName = project.name + '-all'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+
 repositories {
     mavenCentral()
 }

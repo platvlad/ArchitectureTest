@@ -9,6 +9,7 @@ import architectureTest.protobuf.StatResponseOuterClass.StatResponse;
 import org.apache.commons.cli.ParseException;
 import org.jfree.chart.ChartUtils;
 
+import java.awt.*;
 import java.io.*;
 import java.net.Socket;
 import java.nio.file.Files;
@@ -98,8 +99,9 @@ public class ExperimentConfiguration {
     }
 
     private void saveStat(List<Stat> stat, String floatingParameter, List<Integer> xValues)  {
+        String outputDirectory = "output/";
         try {
-            saveDescriptionFile(stat, "output/description.txt");
+            saveDescriptionFile(stat, outputDirectory + "description.txt");
         } catch (IOException e) {
             System.out.println("Failed to save description file");
         }
@@ -112,9 +114,9 @@ public class ExperimentConfiguration {
         List<String> clientTimesStrings = clientTimes.stream().map(Object::toString).collect(Collectors.toList());
 
         try {
-        Files.write(Paths.get("output/sort_times.txt"), sortTimesStrings);
-        Files.write(Paths.get("output/process_times.txt"), processTimesStrings);
-        Files.write(Paths.get("output/client_times.txt"), clientTimesStrings);
+        Files.write(Paths.get(outputDirectory + "sort_times.txt"), sortTimesStrings);
+        Files.write(Paths.get(outputDirectory + "process_times.txt"), processTimesStrings);
+        Files.write(Paths.get(outputDirectory + "client_times.txt"), clientTimesStrings);
         } catch (IOException e) {
             System.out.println("Failed to save stat to file");
         }
@@ -122,10 +124,14 @@ public class ExperimentConfiguration {
         Chart chart = new Chart(stat.get(0).architecture, xValues, sortTimes, processTimes, clientTimes, floatingParameter);
         chart.setVisible(true);
 
-        try (FileOutputStream fileOutput = new FileOutputStream("output/chart.png")) {
-            ChartUtils.writeChartAsPNG(fileOutput, chart.getJfreeChart(), 600, 600);
+        Dimension chartSize = chart.getContentPane().getSize();
+        int width = (int) chartSize.getWidth();
+        int height = (int) chartSize.getHeight();
+
+        try (FileOutputStream fileOutput = new FileOutputStream(outputDirectory + "chart.png")) {
+            ChartUtils.writeChartAsPNG(fileOutput, chart.getJfreeChart(), width, height);
         } catch (FileNotFoundException e) {
-            System.out.println("File output/chart.png cannot be created");
+            System.out.println("File " + outputDirectory + "chart.png cannot be created");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -138,6 +144,7 @@ public class ExperimentConfiguration {
         int step = floatingParam.step;
         List<Stat> stats = new ArrayList<>();
         List<Integer> xValues = new ArrayList<>();
+        int counter = 0;
         while (floatingParam.fixedValue <= floatingParam.maxValue) {
             try {
                 stats.add(runTest(archType));
@@ -146,6 +153,8 @@ public class ExperimentConfiguration {
             }
             xValues.add(floatingParam.fixedValue);
             floatingParam.fixedValue += floatingParam.step;
+            counter++;
+            System.out.println("Finished test " + counter);
         }
         for (Stat stat: stats) {
             stat.step = step;
