@@ -3,27 +3,58 @@ package architectureTest.GUI;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import java.awt.event.ActionEvent;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ParametersCard extends JPanel {
 
     private int minValue;
     private int maxValue;
-    private Configuration config;
+
+    public Map<String, Integer> getParamValues() {
+        Map<String, Integer> result = new HashMap<>();
+        for (Map.Entry<String, JTextField> entry: paramFields.entrySet()) {
+            result.put(entry.getKey(), Integer.parseInt(entry.getValue().getText()));
+        }
+        return result;
+    }
+
+    public JTextField getStepField() {
+        return stepField;
+    }
+
+    public JSlider getMinSlider() {
+        return minSlider;
+    }
+
+    public JSlider getMaxSlider() {
+        return maxSlider;
+    }
+
+    public String getFloatingParameter() {
+        return floatingParameter;
+    }
+
     private String floatingParameter;
+
+    private Map<String, JTextField> paramFields = new HashMap<>();
+
+    private JTextField stepField;
+
+    private JSlider minSlider;
+
+    private JSlider maxSlider;
 
     private enum SliderType {
         MIN,
         MAX
     }
 
-    public ParametersCard(String[] parameterNames, String floatingParameter, int minValue, int maxValue, Configuration cfg) {
+    public ParametersCard(String[] parameterNames, String floatingParameter, int minValue, int maxValue) {
         super(new SpringLayout());
         this.floatingParameter = floatingParameter;
-        config = cfg;
-        config.addParamExperiment(floatingParameter);
         this.minValue = minValue;
         this.maxValue = maxValue;
-        config.addParameter(floatingParameter, floatingParameter);
         createSlider(floatingParameter, SliderType.MIN);
         createSlider(floatingParameter, SliderType.MAX);
         createTextField(floatingParameter, true);
@@ -47,16 +78,11 @@ public class ParametersCard extends JPanel {
         JTextField textField = new JTextField(10);
         label.setLabelFor(textField);
         if (!isStepParam) {
-            config.addParameter(floatingParameter, name);
+            paramFields.put(name, textField);
+        } else {
+            stepField = textField;
         }
-        textField.addActionListener((ActionEvent evt) -> {
-            String newText = textField.getText();
-            if (isStepParam) {
-                config.setStepParameter(floatingParameter, name, newText);
-            } else {
-                config.setFixedParameter(floatingParameter, name, newText);
-            }
-        });
+
         add(textField);
     }
 
@@ -73,18 +99,12 @@ public class ParametersCard extends JPanel {
         int sliderInitValue = (minValue + maxValue) / 2;
         slider.setValue(sliderInitValue);
         if (type.equals(SliderType.MIN)) {
-            config.setMinParameter(floatingParameter, paramName, sliderInitValue);
+            minSlider = slider;
         } else {
-            config.setMaxParameter(floatingParameter, paramName, sliderInitValue);
+            maxSlider = slider;
         }
-        slider.addChangeListener((ChangeEvent e) -> {
-            int sliderValue = slider.getValue();
-            valueText.setText(Integer.toString(sliderValue));
-            if (type.equals(SliderType.MIN)) {
-                config.setMinParameter(floatingParameter, paramName, sliderValue);
-            } else {
-                config.setMaxParameter(floatingParameter, paramName, sliderValue);
-            }
+        slider.addChangeListener((ChangeEvent evt) -> {
+            valueText.setText(Integer.toString(slider.getValue()));
         });
         sliderTextPanel.add(slider);
         sliderTextPanel.add(valueText);

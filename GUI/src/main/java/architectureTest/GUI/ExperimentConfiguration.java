@@ -15,64 +15,11 @@ import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 public class ExperimentConfiguration {
-
-    public static class Parameter {
-        private int fixedValue;
-        private int minValue;
-        private int maxValue;
-        private int step;
-
-        @Override
-        public String toString() {
-            return "fixedValue = " + fixedValue +
-                    "; minValue = " + minValue +
-                    "; maxValue = " + maxValue +
-                    "; step = " + step;
-        }
-    }
-
-    private Map<String, Parameter> parameters = new HashMap<>();
-
-    public ExperimentConfiguration copy() {
-        ExperimentConfiguration result = new ExperimentConfiguration();
-        for (Map.Entry<String, Parameter> entry: parameters.entrySet()) {
-            result.addParameter(entry.getKey());
-            Parameter newParam = result.parameters.get(entry.getKey());
-            Parameter copiedParam = entry.getValue();
-            newParam.fixedValue = copiedParam.fixedValue;
-            newParam.minValue = copiedParam.minValue;
-            newParam.maxValue = copiedParam.maxValue;
-            newParam.step = copiedParam.step;
-        }
-        return result;
-    }
-
-    public void setMinParameter(String paramName, int value) {
-        parameters.get(paramName).minValue = value;
-    }
-
-    public void setMaxParameter(String paramName, int value) {
-        parameters.get(paramName).maxValue = value;
-    }
-
-    public void setStepParameter(String paramName, String value) {
-
-        parameters.get(paramName).step = Integer.parseInt(value);
-    }
-
-    public void setFixedParameter(String paramName, String value) {
-        parameters.get(paramName).fixedValue = Integer.parseInt(value);
-    }
-
-    public void addParameter(String name) {
-        parameters.put(name, new Parameter());
-    }
 
     private void addParameterValue(List<Stat> stat, List<String> descStrings, String paramName, int minParam, int maxParam) {
         String str = paramName + ": ";
@@ -138,21 +85,20 @@ public class ExperimentConfiguration {
 
     }
 
-    public void runExperiment(String archType, String floatingParamName) {
-        Parameter floatingParam = parameters.get(floatingParamName);
-        floatingParam.fixedValue = floatingParam.minValue;
-        int step = floatingParam.step;
+    public void runExperiment(String archType, String floatingParamName, int minValue, int maxValue, int step, Map<String, Integer> paramValues) {
         List<Stat> stats = new ArrayList<>();
         List<Integer> xValues = new ArrayList<>();
         int counter = 0;
-        while (floatingParam.fixedValue <= floatingParam.maxValue) {
+        int floatingParamValue = minValue;
+        while (floatingParamValue <= maxValue) {
+            paramValues.put(floatingParamName, floatingParamValue);
             try {
-                stats.add(runTest(archType));
+                stats.add(runTest(archType, paramValues));
             } catch (IOException e) {
                 return;
             }
-            xValues.add(floatingParam.fixedValue);
-            floatingParam.fixedValue += floatingParam.step;
+            xValues.add(floatingParamValue);
+            floatingParamValue += step;
             counter++;
             System.out.println("Finished test " + counter);
         }
@@ -195,7 +141,7 @@ public class ExperimentConfiguration {
         return response;
     }
 
-    private Stat runTest(String archType) throws IOException {
+    private Stat runTest(String archType, Map<String, Integer> parameters) throws IOException {
         int serverCode = 1;
         if (archType.equals("Tasks pool")) {
             serverCode = 2;
@@ -207,10 +153,10 @@ public class ExperimentConfiguration {
         ip = ipFileLines.get(0);
         runServer(serverCode, ip);
 
-        int numElems = parameters.get("Number of elements").fixedValue;
-        int numClients = parameters.get("Number of clients").fixedValue;
-        int delta = parameters.get("delta").fixedValue;
-        int requestsNumber = parameters.get("requests number").fixedValue;
+        int numElems = parameters.get("Number of elements");
+        int numClients = parameters.get("Number of clients");
+        int delta = parameters.get("delta");
+        int requestsNumber = parameters.get("requests number");
 
 
         List<Thread> clients = new ArrayList<>();

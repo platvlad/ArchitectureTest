@@ -23,14 +23,4 @@ public class Stat {
         return avgClientTime;
     }
 
-    public String getFloatingParam(Stat other) {
-        if (numElements != other.numElements) {
-            return "Number of elements";
-        }
-        if (numClients != other.numClients) {
-            return "Number of clients";
-        }
-        return "delta";
-    }
-
 }

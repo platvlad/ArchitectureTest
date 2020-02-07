@@ -2,8 +2,7 @@ package architectureTest.GUI;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ItemEvent;
-import java.util.Objects;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.swing.*;
@@ -11,16 +10,14 @@ import javax.swing.*;
 public class Application {
     private ExecutorService uiThreadPool = Executors.newSingleThreadExecutor();
     private ExecutorService workThreadPool = Executors.newFixedThreadPool(4);
-    final Configuration config = new Configuration();
+    private JComboBox<String> architectureBox;
+
+    private ParametersPanel centerPanel;
 
     private JComboBox<String> createArchitectureComboBox() {
         String[] architectures = {"Thread per client", "Tasks pool", "Non-blocking"};
-        JComboBox<String> box = new JComboBox<>(architectures);
-        config.setArchitectureType(Objects.requireNonNull(box.getSelectedItem()).toString());
-        box.addItemListener((ItemEvent e) -> {
-            config.setArchitectureType((String) e.getItem());
-        });
-        return box;
+
+        return new JComboBox<>(architectures);
     }
 
     public void runApplication() {
@@ -30,10 +27,10 @@ public class Application {
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.setLayout(new BorderLayout());
 
-            JComboBox<String> architectureBox = createArchitectureComboBox();
+            architectureBox = createArchitectureComboBox();
             frame.add(architectureBox, BorderLayout.NORTH);
 
-            JPanel centerPanel = new ParametersPanel(config);
+            centerPanel = new ParametersPanel();
             frame.add(centerPanel, BorderLayout.WEST);
 
             JPanel buttonPanel = addButtonPanel();
@@ -47,15 +44,17 @@ public class Application {
         JPanel buttonPanel = new JPanel();
         JButton button = new JButton("Test");
         button.addActionListener((ActionEvent evt) -> {
-            String archType;
-            String floatingParam;
-            ExperimentConfiguration expConfig;
-            synchronized (config) {
-                archType = config.getArchitectureType();
-                floatingParam = config.getFloatingParam();
-                expConfig = config.getCurrentExperiment();
-            }
-            workThreadPool.submit(() -> expConfig.runExperiment(archType, floatingParam));
+            String archType = (String) architectureBox.getSelectedItem();
+            ParametersCard card = centerPanel.getCurrentCard();
+            String floatingParam = card.getFloatingParameter();
+            int minValue = card.getMinSlider().getValue();
+            int maxValue = card.getMaxSlider().getValue();
+            int step = Integer.parseInt(card.getStepField().getText());
+            Map<String, Integer> paramValues = card.getParamValues();
+
+            ExperimentConfiguration expConfig = new ExperimentConfiguration();
+
+            workThreadPool.submit(() -> expConfig.runExperiment(archType, floatingParam, minValue, maxValue, step, paramValues));
         });
         buttonPanel.add(button);
         JLabel label = new JLabel();
