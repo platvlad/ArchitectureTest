@@ -38,6 +38,8 @@ public class ReadSelectorListener implements Runnable {
                         boolean keepInSelector = buffers.readToBuffer(key, gotRequestTime);
                         if (!keepInSelector) {
                             key.cancel();
+                            //keyIterator.remove();
+                            continue;
                         }
                     } catch (IOException e) {
                         System.out.println("Failed to read to buffer");

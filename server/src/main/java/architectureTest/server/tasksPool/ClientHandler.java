@@ -7,6 +7,7 @@ import architectureTest.server.ServerStat;
 import java.io.IOException;
 import java.net.Socket;
 import java.time.Instant;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -16,9 +17,12 @@ public class ClientHandler implements Runnable {
 
     private ServerStat stat;
 
-    public ClientHandler(Socket socket, ServerStat stat) {
+    private CountDownLatch startLatch;
+
+    public ClientHandler(Socket socket, ServerStat stat, CountDownLatch startLatch) {
         this.socket = socket;
         this.stat = stat;
+        this.startLatch = startLatch;
     }
 
     @Override
@@ -37,7 +41,7 @@ public class ClientHandler implements Runnable {
                 break;
             }
             Instant gotRequestTime = Instant.now();
-            sortPool.submit(new RequestHandler(request, stat, sendPool, socket, gotRequestTime));
+            sortPool.submit(new RequestHandler(request, stat, startLatch, sendPool, socket, gotRequestTime));
         }
         try {
             socket.close();

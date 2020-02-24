@@ -1,6 +1,6 @@
 package architectureTest.serverRunner;
 
-import architectureTest.protobuf.ServerCodeOuterClass.ServerCode;
+import architectureTest.protobuf.ServerConfigOuterClass.ServerConfig;
 import architectureTest.server.Server;
 import architectureTest.server.ServerParameters;
 import org.apache.commons.cli.ParseException;
@@ -36,24 +36,25 @@ public class ServerCommandListener implements Runnable {
             }
             if (socket != null) {
                 InputStream input;
-                ServerCode serverCode;
+                ServerConfig serverConfig;
                 try {
                     input  = socket.getInputStream();
-                    serverCode = ServerCode.parseDelimitedFrom(input);
+                    serverConfig = ServerConfig.parseDelimitedFrom(input);
                 } catch (IOException e) {
                     System.out.println("Failed to get or parse input");
                     continue;
                 }
                 String[] params = null;
-                switch (serverCode.getCode()) {
+                String numClientsParam = Integer.toString(serverConfig.getNumClients());
+                switch (serverConfig.getCode()) {
                     case 1:
-                        params = new String[]{"-a", "thread_per_client", "-p", "8080"};
+                        params = new String[]{"-a", "thread_per_client", "-p", "8080", "-n", numClientsParam};
                         break;
                     case 2:
-                        params = new String[]{"-a", "tasks_pool", "-p", "8080"};
+                        params = new String[]{"-a", "tasks_pool", "-p", "8080", "-n", numClientsParam};
                         break;
                     case 3:
-                        params = new String[]{"-a", "non_blocking", "-p", "8080"};
+                        params = new String[]{"-a", "non_blocking", "-p", "8080", "-n", numClientsParam};
                         break;
                     default:
                         break;
@@ -79,7 +80,7 @@ public class ServerCommandListener implements Runnable {
                     serverThread = serverThreadEntry.getValue();
                 }
                 try {
-                    serverCode.writeDelimitedTo(socket.getOutputStream());
+                    serverConfig.writeDelimitedTo(socket.getOutputStream());
                 } catch (IOException e) {
                     System.out.println("Failed to send response");
                 }

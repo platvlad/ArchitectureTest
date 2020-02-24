@@ -1,0 +1,10 @@
+package architectureTest.protobuf;
+
+message ServerConfig {
+    // 0 - finished requests sending
+    // 1 - get stat
+    // 2 - sort array
+    // 3 - starting requests sending
+    required int32 code = 1;
+    required int32 numClients = 2;
+}

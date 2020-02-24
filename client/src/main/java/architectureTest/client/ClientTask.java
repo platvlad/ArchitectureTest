@@ -21,8 +21,12 @@ public class ClientTask implements Runnable {
 
     private List<Duration> durations = new ArrayList<>();
 
+    private List<Long> listToSort;
+
     public ClientTask(ClientParameters params) {
         this.params = params;
+        int listSize = params.getNumElems();
+        listToSort = generateList(listSize);
     }
 
     private List<Long> generateList(int size) {
@@ -55,17 +59,17 @@ public class ClientTask implements Runnable {
         System.out.println(correct);
     }
 
-    private void genSortArray(Socket socket, int listSize) throws IOException {
-        List<Long> elems = generateList(listSize);
+    private void sortArray(Socket socket) throws IOException {
         Instant start = Instant.now();
         try {
-            Network.sendArray(socket, elems);
+            Network.sendArray(socket, listToSort);
         } catch (IOException e) {
             System.out.println("Failed to send array");
             throw e;
         }
         try {
             Request result = Network.parseRequest(socket);
+            System.out.println("Got array sorting result (" + socket.getLocalPort() + ")");
         } catch (IOException e) {
             System.out.println("Failed to get sort results");
             throw e;
@@ -80,11 +84,14 @@ public class ClientTask implements Runnable {
         String host = params.getServerIP();
         int port = params.getPort();
         try (Socket socket = new Socket(host, port)) {
-            int listSize = params.getNumElems();
+            System.out.println("Sending sign (" + socket.getLocalPort() + ")");
+            Network.sendSign(socket, 3);
+            Network.parseRequest(socket);
+            System.out.println("Sent sign (" + socket.getLocalPort() + ")");
             long waitTime = params.getDelta();
             for (int i = 0; i < numRequests; i++) {
                 try {
-                    genSortArray(socket, listSize);
+                    sortArray(socket);
                 } catch (IOException e) {
                     return;
                 }
@@ -94,13 +101,15 @@ public class ClientTask implements Runnable {
                     return;
                 }
             }
-            avgRequestTime = durations.stream().mapToDouble(Duration::toMillis).average().orElse(0);
             try {
-                Network.sendFinishSign(socket);
+                System.out.println("Sending finish request (" + socket.getLocalPort() + ")");
+                Network.sendSign(socket, 0);
                 Network.parseRequest(socket);
+                System.out.println("Got finish response (" + socket.getLocalPort() + ")");
             } catch (IOException e) {
                 System.out.println("Failed to send finish sign");
             }
+            avgRequestTime = durations.stream().mapToDouble(Duration::toMillis).average().orElse(0);
         } catch (IOException e) {
             System.out.println("Failed to connect to " + host);
         }

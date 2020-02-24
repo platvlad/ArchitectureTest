@@ -12,6 +12,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 public class ClientHandler implements Runnable {
 
@@ -19,9 +20,12 @@ public class ClientHandler implements Runnable {
 
     private ServerStat stat;
 
-    public ClientHandler(Socket socket, ServerStat stat) {
+    private CountDownLatch startLatch;
+
+    public ClientHandler(Socket socket, ServerStat stat, CountDownLatch startLatch) {
         this.socket = socket;
         this.stat = stat;
+        this.startLatch = startLatch;
     }
 
     private void processArraySortingRequest(Request request, Instant startProcess) throws IOException {
@@ -70,9 +74,18 @@ public class ClientHandler implements Runnable {
                     case 2:
                         processArraySortingRequest(request, startProcess);
                         break;
+                    case 3:
+                        startLatch.countDown();
+                        while (startLatch.getCount() > 0) {
+                            startLatch.await();
+                        }
+                        Network.sendSign(socket, 3);
                 }
             } catch (IOException e) {
                 System.out.println("Failed to write to socket");
+            } catch (InterruptedException e) {
+                System.out.println("Interrupted while waiting clients");
+                break;
             }
         }
         try {

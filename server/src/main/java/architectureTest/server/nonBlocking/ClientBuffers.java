@@ -12,6 +12,8 @@ import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 
 public class ClientBuffers {
@@ -29,13 +31,23 @@ public class ClientBuffers {
         this.socketChannel = socketChannel;
     }
 
+    public CountDownLatch getStartLatch() {
+        return server.getStartLatch();
+    }
+
     public boolean readToBuffer(SelectionKey readKey, Instant gotRequestTime) throws IOException {
+        System.out.println("Entered readToBuffer (" + socketChannel.socket().getPort() + ")");
         if (inputSizeBuffer.position() == 0) {
             startRequest = gotRequestTime;
         }
         SocketChannel channel = (SocketChannel) readKey.channel();
         if (inputSizeBuffer.hasRemaining()) {
             long bytesRead = channel.read(inputSizeBuffer);
+            System.out.println("Exiting readToBuffer (" +
+                    socketChannel.socket().getPort() +
+                    ") after reading size (" +
+                    bytesRead +
+                    " bytes)");
             return bytesRead >= 0;
         }
         inputSizeBuffer.flip();
@@ -45,8 +57,17 @@ public class ClientBuffers {
         if (inputBuffer.capacity() < inputSize) {
             inputBuffer = ByteBuffer.allocate(inputSize);
         }
+        System.out.println("Ready to read " + inputSize + " bytes");
         long bytesRead = channel.read(inputBuffer);
+        System.out.println("Read " +
+                bytesRead +
+                " bytes of message; inputSize = " +
+                inputSize +
+                "(" +
+                socketChannel.socket().getPort()
+                + ")");
         if (bytesRead < 0) {
+            System.out.println("Exiting readToBuffer (" + socketChannel.socket().getPort() + ") - nothing to read");
             return false;
         }
         int inputBufferPosition = inputBuffer.position();
@@ -62,6 +83,7 @@ public class ClientBuffers {
             inputBuffer.clear();
             inputSizeBuffer.clear();
         }
+        System.out.println("Exiting readToBuffer (" + socketChannel.socket().getPort() + ") after reading");
         return true;
     }
 

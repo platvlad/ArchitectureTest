@@ -9,6 +9,7 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -17,9 +18,11 @@ public class NonBlockingServer extends Server {
     private ReadSelectorListener readSelectorListener;
     private WriteSelectorListener writeSelectorListener;
     private ExecutorService sortPool;
+    private int numClients;
 
-    public NonBlockingServer(int port) {
-        super(port);
+    public NonBlockingServer(int port, int numClients) {
+        super(port, numClients);
+        this.numClients = numClients;
         try {
             readSelectorListener = new ReadSelectorListener();
             writeSelectorListener = new WriteSelectorListener();
@@ -36,8 +39,12 @@ public class NonBlockingServer extends Server {
         return stat;
     }
 
-    Selector getWriteSelector() {
+    public Selector getWriteSelector() {
         return writeSelectorListener.getSelector();
+    }
+
+    public CountDownLatch getStartLatch() {
+        return startLatch;
     }
 
     @Override
@@ -45,11 +52,11 @@ public class NonBlockingServer extends Server {
         if (readSelectorListener == null || writeSelectorListener == null) {
             return;
         }
+        sortPool = Executors.newFixedThreadPool(Math.max(4, numClients));
         Thread readingThread = new Thread(readSelectorListener);
         readingThread.start();
         Thread writingThread = new Thread(writeSelectorListener);
         writingThread.start();
-        sortPool = Executors.newFixedThreadPool(4);
         ServerSocketChannel serverChannel;
         InetSocketAddress serverAddress = new InetSocketAddress(PORT);
         try {

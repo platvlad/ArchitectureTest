@@ -8,8 +8,8 @@ import java.net.Socket;
 
 public class TasksPoolServer extends Server {
 
-    public TasksPoolServer(int port) {
-        super(port);
+    public TasksPoolServer(int port, int numClients) {
+        super(port, numClients);
     }
 
     @Override
@@ -28,7 +28,7 @@ public class TasksPoolServer extends Server {
                 break;
             }
             if (socket != null) {
-                ClientHandler handler = new ClientHandler(socket, stat);
+                ClientHandler handler = new ClientHandler(socket, stat, startLatch);
                 Thread handlerThread = new Thread(handler);
                 handlerThread.start();
             }

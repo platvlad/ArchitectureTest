@@ -4,7 +4,7 @@ import ArchitectureTest.utils.Network;
 import architectureTest.client.ClientParameters;
 import architectureTest.client.ClientTask;
 import architectureTest.protobuf.RequestOuterClass.Request;
-import architectureTest.protobuf.ServerCodeOuterClass.ServerCode;
+import architectureTest.protobuf.ServerConfigOuterClass.ServerConfig;
 import architectureTest.protobuf.StatResponseOuterClass.StatResponse;
 import org.apache.commons.cli.ParseException;
 import org.jfree.chart.ChartUtils;
@@ -102,19 +102,22 @@ public class ExperimentConfiguration {
             counter++;
             System.out.println("Finished test " + counter);
         }
-        for (Stat stat: stats) {
+            for (Stat stat: stats) {
             stat.step = step;
         }
         saveStat(stats, floatingParamName, xValues);
     }
 
-    private void runServer(int code, String hostName) throws IOException {
-        ServerCode.Builder serverCodeBuilder = ServerCode.newBuilder();
-        serverCodeBuilder.setCode(code);
-        ServerCode serverCode = serverCodeBuilder.build();
+    private void runServer(int code, int numClients, String hostName) throws IOException {
+        ServerConfig.Builder serverConfigBuilder = ServerConfig.newBuilder();
+        serverConfigBuilder.setCode(code);
+
+        serverConfigBuilder.setNumClients(numClients);
+        serverConfigBuilder.setNumClients(numClients);
+        ServerConfig serverConfig = serverConfigBuilder.build();
         Socket socket = new Socket(hostName, 8081);
-        serverCode.writeDelimitedTo(socket.getOutputStream());
-        ServerCode.parseDelimitedFrom(socket.getInputStream());
+        serverConfig.writeDelimitedTo(socket.getOutputStream());
+        ServerConfig.parseDelimitedFrom(socket.getInputStream());
         socket.close();
     }
 
@@ -148,13 +151,13 @@ public class ExperimentConfiguration {
         } else if (archType.equals("Non-blocking")) {
             serverCode = 3;
         }
+        int numClients = parameters.get("Number of clients");
         String ip;
         List<String> ipFileLines = Files.readAllLines(Paths.get("ip.txt"));
         ip = ipFileLines.get(0);
-        runServer(serverCode, ip);
+        runServer(serverCode, numClients, ip);
 
         int numElems = parameters.get("Number of elements");
-        int numClients = parameters.get("Number of clients");
         int delta = parameters.get("delta");
         int requestsNumber = parameters.get("requests number");
 
@@ -200,7 +203,7 @@ public class ExperimentConfiguration {
         stat.numClients = numClients;
         stat.delta = delta;
         // stop server
-        runServer(0, ip);
+        runServer(0, numClients, ip);
 
         return stat;
     }

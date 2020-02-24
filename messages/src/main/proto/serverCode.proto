@@ -1,5 +1,0 @@
-package architectureTest.protobuf;
-
-message ServerCode {
-    required int32 code = 1;
-}

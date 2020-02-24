@@ -88,12 +88,16 @@ public class Network {
         return response;
     }
 
-    public static void sendFinishSign(Socket socket) throws IOException {
-        OutputStream output = socket.getOutputStream();
+    public static Request makeSignMessage(int code) {
         Request.Builder requestBuilder = Request.newBuilder();
-        requestBuilder.setCode(0);
+        requestBuilder.setCode(code);
         requestBuilder.addAllElems(new ArrayList<>());
-        Request request = requestBuilder.build();
+        return requestBuilder.build();
+    }
+
+    public static void sendSign(Socket socket, int code) throws IOException {
+        OutputStream output = socket.getOutputStream();
+        Request request = makeSignMessage(code);
         sendMessage(request, output);
     }
 

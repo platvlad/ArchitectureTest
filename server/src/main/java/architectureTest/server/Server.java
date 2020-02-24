@@ -8,14 +8,17 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.AbstractMap;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 
 public abstract class Server implements Runnable {
     protected ServerStat stat = new ServerStat();
-    protected int PORT = 8080;
+    protected int PORT;
     protected volatile ServerSocket serverSocket;
+    protected CountDownLatch startLatch;
 
-    public Server(int port) {
+    public Server(int port, int numClients) {
         PORT = port;
+        startLatch = new CountDownLatch(numClients);
     }
 
     @Override
@@ -34,16 +37,17 @@ public abstract class Server implements Runnable {
 
     public static Map.Entry<Server, Thread> startServer(ServerParameters params) {
         int port = params.getPort();
+        int numClients = params.getNumClients();
         Server server;
         switch (params.getArchitecture()) {
             case THREAD_PER_CLIENT:
-                server = new ThreadPerClientServer(port);
+                server = new ThreadPerClientServer(port, numClients);
                 break;
             case TASKS_POOL:
-                server = new TasksPoolServer(port);
+                server = new TasksPoolServer(port, numClients);
                 break;
             default:
-                server = new NonBlockingServer(port);
+                server = new NonBlockingServer(port, numClients);
                 break;
         }
         Thread serverThread = new Thread(server);

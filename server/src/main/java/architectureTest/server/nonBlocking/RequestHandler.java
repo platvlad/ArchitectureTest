@@ -11,6 +11,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 
 public class RequestHandler implements Runnable {
@@ -47,8 +48,23 @@ public class RequestHandler implements Runnable {
             case 1:
                 response = stat.buildResponse();
                 break;
-            default:
+            case 2:
                 response = processArraySortingRequest(request);
+                break;
+            default:
+                CountDownLatch startLatch = buffers.getStartLatch();
+                startLatch.countDown();
+                System.out.println("Start latch count = " + startLatch.getCount());
+                while (startLatch.getCount() > 0) {
+                    try {
+                        startLatch.await();
+                    } catch (InterruptedException e) {
+                        System.out.println("Interrupted while waiting for clients");
+                        return;
+                    }
+                }
+                response = Network.makeSignMessage(3);
+                System.out.println("Finish handling start request");
                 break;
         }
         try {
@@ -56,5 +72,6 @@ public class RequestHandler implements Runnable {
         } catch (IOException e) {
             System.out.println("Failed to send response");
         }
+        System.out.println("handled non-start request");
     }
 }

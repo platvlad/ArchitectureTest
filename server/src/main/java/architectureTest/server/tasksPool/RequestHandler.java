@@ -11,19 +11,28 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 
 public class RequestHandler implements Runnable {
 
     private Request request;
     private ServerStat stat;
+    private CountDownLatch startLatch;
     private ExecutorService sendPool;
     private Socket socket;
     private Instant gotRequestTime;
 
-    public RequestHandler(Request request, ServerStat stat, ExecutorService sendPool, Socket socket, Instant gotRequestTime) {
+    public RequestHandler(
+            Request request,
+            ServerStat stat,
+            CountDownLatch startLatch,
+            ExecutorService sendPool,
+            Socket socket,
+            Instant gotRequestTime) {
         this.request = request;
         this.stat = stat;
+        this.startLatch = startLatch;
         this.sendPool = sendPool;
         this.socket = socket;
         this.gotRequestTime = gotRequestTime;
@@ -55,8 +64,21 @@ public class RequestHandler implements Runnable {
                 response = stat.buildResponse();
                 sendPool.submit(new ResponseSender(socket, response));
                 break;
-            default:
+            case 2:
                 processArraySortingRequest(request);
+                break;
+            case 3:
+                startLatch.countDown();
+                while (startLatch.getCount() > 0) {
+                    try {
+                        startLatch.await();
+                    } catch (InterruptedException e) {
+                        System.out.println("Interrupted while waiting for clients");
+                        return;
+                    }
+                }
+                response = Network.makeSignMessage(3);
+                sendPool.submit(new ResponseSender(socket, response));
                 break;
         }
     }
