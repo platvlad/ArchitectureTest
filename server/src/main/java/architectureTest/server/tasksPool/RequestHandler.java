@@ -74,6 +74,7 @@ public class RequestHandler implements Runnable {
                         startLatch.await();
                     } catch (InterruptedException e) {
                         System.out.println("Interrupted while waiting for clients");
+                        stat.setNotValid();
                         return;
                     }
                 }

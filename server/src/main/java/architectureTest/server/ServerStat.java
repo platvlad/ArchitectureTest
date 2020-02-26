@@ -10,6 +10,7 @@ import java.util.List;
 
 public class ServerStat {
     public volatile boolean finish;
+    public volatile boolean valid = true;
     public final List<Duration> sortTimes = Collections.synchronizedList(new ArrayList<>());
     public final List<Duration> processTimes = Collections.synchronizedList(new ArrayList<>());
 
@@ -33,6 +34,7 @@ public class ServerStat {
         StatResponse.Builder responseBuilder = StatResponse.newBuilder();
         responseBuilder.setSortAvg(getAvgSortTime());
         responseBuilder.setProcessAvg(getAvgProcessTime());
+        responseBuilder.setValid(valid);
         return responseBuilder.build();
     }
 
@@ -42,6 +44,11 @@ public class ServerStat {
         requestBuilder.setCode(0);
         requestBuilder.addAllElems(new ArrayList<>());
         return requestBuilder.build();
+    }
+
+    public void setNotValid() {
+        finish = true;
+        valid = false;
     }
 
 }

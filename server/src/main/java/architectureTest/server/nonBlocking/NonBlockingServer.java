@@ -5,7 +5,6 @@ import architectureTest.server.ServerStat;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
@@ -24,10 +23,11 @@ public class NonBlockingServer extends Server {
         super(port, numClients);
         this.numClients = numClients;
         try {
-            readSelectorListener = new ReadSelectorListener();
-            writeSelectorListener = new WriteSelectorListener();
+            readSelectorListener = new ReadSelectorListener(stat);
+            writeSelectorListener = new WriteSelectorListener(stat);
         } catch (IOException e) {
             System.out.println("Failed to open selectors");
+            stat.setNotValid();
         }
     }
 
@@ -41,6 +41,10 @@ public class NonBlockingServer extends Server {
 
     public Selector getWriteSelector() {
         return writeSelectorListener.getSelector();
+    }
+
+    public WriteSelectorListener getWriteSelectorListener() {
+        return writeSelectorListener;
     }
 
     public CountDownLatch getStartLatch() {
@@ -72,15 +76,19 @@ public class NonBlockingServer extends Server {
             try {
                 socketChannel = serverChannel.accept();
             } catch (IOException e) {
+                stat.setNotValid();
                 break;
             }
             if (socketChannel != null) {
                 try {
                     socketChannel.configureBlocking(false);
                     Selector readSelector = readSelectorListener.getSelector();
-                    socketChannel.register(readSelector, SelectionKey.OP_READ, new ClientBuffers(this, socketChannel));
+                    ClientBuffers channelBuffers = new ClientBuffers(this, socketChannel);
+                    readSelectorListener.newChannels.put(socketChannel, channelBuffers);
+                    readSelector.wakeup();
                 } catch (IOException e) {
                     System.out.println("Failed to configure channel blocking");
+                    stat.setNotValid();
                 }
             }
         }

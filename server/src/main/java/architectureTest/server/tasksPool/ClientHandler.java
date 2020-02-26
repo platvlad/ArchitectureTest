@@ -38,6 +38,7 @@ public class ClientHandler implements Runnable {
                 }
             } catch (IOException e) {
                 System.out.println("Failed to handle request input");
+                stat.setNotValid();
                 break;
             }
             Instant gotRequestTime = Instant.now();

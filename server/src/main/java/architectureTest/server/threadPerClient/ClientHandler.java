@@ -56,6 +56,7 @@ public class ClientHandler implements Runnable {
                 }
             } catch (IOException e) {
                 System.out.println("Failed to handle request input");
+                stat.setNotValid();
                 break;
             }
             Instant startProcess = Instant.now();
@@ -83,8 +84,10 @@ public class ClientHandler implements Runnable {
                 }
             } catch (IOException e) {
                 System.out.println("Failed to write to socket");
+                stat.setNotValid();
             } catch (InterruptedException e) {
                 System.out.println("Interrupted while waiting clients");
+                stat.setNotValid();
                 break;
             }
         }

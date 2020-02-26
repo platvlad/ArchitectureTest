@@ -34,6 +34,7 @@ public class ResponseSender implements Runnable {
             Network.sendMessage(response, socket.getOutputStream());
         } catch (IOException e) {
             System.out.println("Failed to send response");
+            stat.setNotValid();
         }
         if (gotRequestTime != null) {
             Instant sentResponseTime = Instant.now();

@@ -41,6 +41,7 @@ public class RequestHandler implements Runnable {
     public void run() {
         int code = request.getCode();
         Message response;
+        boolean needWriteDuration = false;
         switch (code) {
             case 0:
                 response = stat.setFinishFlag();
@@ -50,28 +51,28 @@ public class RequestHandler implements Runnable {
                 break;
             case 2:
                 response = processArraySortingRequest(request);
+                needWriteDuration = true;
                 break;
             default:
                 CountDownLatch startLatch = buffers.getStartLatch();
                 startLatch.countDown();
-                System.out.println("Start latch count = " + startLatch.getCount());
                 while (startLatch.getCount() > 0) {
                     try {
                         startLatch.await();
                     } catch (InterruptedException e) {
                         System.out.println("Interrupted while waiting for clients");
+                        stat.setNotValid();
                         return;
                     }
                 }
                 response = Network.makeSignMessage(3);
-                System.out.println("Finish handling start request");
                 break;
         }
         try {
-            buffers.setMessageToSend(response);
+            buffers.setMessageToSend(response, needWriteDuration);
         } catch (IOException e) {
+            stat.setNotValid();
             System.out.println("Failed to send response");
         }
-        System.out.println("handled non-start request");
     }
 }

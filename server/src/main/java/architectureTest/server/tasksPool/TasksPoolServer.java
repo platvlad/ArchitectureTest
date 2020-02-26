@@ -25,6 +25,7 @@ public class TasksPoolServer extends Server {
             try {
                 socket = serverSocket.accept();
             } catch (IOException e) {
+                stat.setNotValid();
                 break;
             }
             if (socket != null) {

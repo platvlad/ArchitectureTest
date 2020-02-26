@@ -2,5 +2,5 @@ Architecture: Thread per client
 Number of requests: 10
 Number of elements: from 1 to 90001
 step: 10000
-Number of clients: 10
-Delta: 200
+Number of clients: 6
+Delta: 50

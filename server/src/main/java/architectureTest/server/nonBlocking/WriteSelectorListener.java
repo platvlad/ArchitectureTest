@@ -1,28 +1,24 @@
 package architectureTest.server.nonBlocking;
 
+import architectureTest.server.ServerStat;
+
 import java.io.IOException;
 import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
 import java.util.Iterator;
 import java.util.Set;
 
-public class WriteSelectorListener implements Runnable {
+public class WriteSelectorListener extends SelectorListener implements Runnable {
 
-    private Selector selector;
-
-    public WriteSelectorListener() throws IOException {
-        selector = Selector.open();
-    }
-
-    public Selector getSelector() {
-        return selector;
+    public WriteSelectorListener(ServerStat stat) throws IOException {
+        super(stat);
     }
 
     @Override
     public void run() {
         while (!Thread.interrupted()) {
             try {
-                selector.selectNow();
+                selector.select();
+                registerChannels(SelectionKey.OP_WRITE);
                 Set<SelectionKey> selectedKeys = selector.selectedKeys();
                 Iterator<SelectionKey> keyIterator = selectedKeys.iterator();
                 while (keyIterator.hasNext()) {
@@ -34,6 +30,7 @@ public class WriteSelectorListener implements Runnable {
                     keyIterator.remove();
                 }
             } catch (IOException e) {
+                stat.setNotValid();
                 System.out.println("Failed to write response");
             }
         }

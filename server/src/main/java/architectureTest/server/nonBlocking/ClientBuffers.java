@@ -12,7 +12,6 @@ import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 
@@ -26,6 +25,8 @@ public class ClientBuffers {
 
     private ByteBuffer outputBuffer;
 
+    boolean needWriteDuration = true;
+
     public ClientBuffers(NonBlockingServer server, SocketChannel socketChannel) {
         this.server = server;
         this.socketChannel = socketChannel;
@@ -36,18 +37,12 @@ public class ClientBuffers {
     }
 
     public boolean readToBuffer(SelectionKey readKey, Instant gotRequestTime) throws IOException {
-        System.out.println("Entered readToBuffer (" + socketChannel.socket().getPort() + ")");
         if (inputSizeBuffer.position() == 0) {
             startRequest = gotRequestTime;
         }
         SocketChannel channel = (SocketChannel) readKey.channel();
         if (inputSizeBuffer.hasRemaining()) {
             long bytesRead = channel.read(inputSizeBuffer);
-            System.out.println("Exiting readToBuffer (" +
-                    socketChannel.socket().getPort() +
-                    ") after reading size (" +
-                    bytesRead +
-                    " bytes)");
             return bytesRead >= 0;
         }
         inputSizeBuffer.flip();
@@ -57,17 +52,8 @@ public class ClientBuffers {
         if (inputBuffer.capacity() < inputSize) {
             inputBuffer = ByteBuffer.allocate(inputSize);
         }
-        System.out.println("Ready to read " + inputSize + " bytes");
         long bytesRead = channel.read(inputBuffer);
-        System.out.println("Read " +
-                bytesRead +
-                " bytes of message; inputSize = " +
-                inputSize +
-                "(" +
-                socketChannel.socket().getPort()
-                + ")");
         if (bytesRead < 0) {
-            System.out.println("Exiting readToBuffer (" + socketChannel.socket().getPort() + ") - nothing to read");
             return false;
         }
         int inputBufferPosition = inputBuffer.position();
@@ -83,11 +69,11 @@ public class ClientBuffers {
             inputBuffer.clear();
             inputSizeBuffer.clear();
         }
-        System.out.println("Exiting readToBuffer (" + socketChannel.socket().getPort() + ") after reading");
         return true;
     }
 
-    public void setMessageToSend(Message message) throws IOException {
+    public void setMessageToSend(Message message, boolean writeTime) throws IOException {
+        needWriteDuration = writeTime;
         Selector selector = server.getWriteSelector();
         int requestSize = message.getSerializedSize();
         byte[] requestSizeBytes = Network.intToByteArray(requestSize);
@@ -96,20 +82,23 @@ public class ClientBuffers {
         message.writeTo(arrayOutputStream);
         outputBuffer = ByteBuffer.wrap(arrayOutputStream.toByteArray());
         if (socketChannel.keyFor(selector) == null) {
-            socketChannel.register(selector, SelectionKey.OP_WRITE, this);
+            WriteSelectorListener writeListener = server.getWriteSelectorListener();
+            writeListener.newChannels.put(socketChannel, this);
+            selector.wakeup();
         }
     }
 
     public void writeOutput(SelectionKey key) throws IOException {
         SocketChannel channel = (SocketChannel) key.channel();
+        Instant sentResponseTime = Instant.now();
         channel.write(outputBuffer);
         if (!outputBuffer.hasRemaining()) {
-            Instant sentResponseTime = Instant.now();
             ServerStat stat = server.getStat();
-            if (!stat.finish) {
+            if (!stat.finish && needWriteDuration) {
                 stat.processTimes.add(Duration.between(startRequest, sentResponseTime));
             }
             key.cancel();
+            needWriteDuration = true;
         }
     }
 }

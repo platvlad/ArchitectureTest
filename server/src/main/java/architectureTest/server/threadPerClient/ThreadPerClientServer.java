@@ -25,6 +25,8 @@ public class ThreadPerClientServer extends Server {
             try {
                 socket = serverSocket.accept();
             } catch (IOException e) {
+                stat.finish = true;
+                stat.valid = false;
                 break;
             }
             if (socket != null) {

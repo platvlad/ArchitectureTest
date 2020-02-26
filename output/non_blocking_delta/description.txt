@@ -1,6 +1,6 @@
 Architecture: Non-blocking
 Number of requests: 10
 Number of elements: 10000
-Number of clients: 30
-Delta: from 304 to 604
-step: 30
+Number of clients: 25
+Delta: from 20 to 2020
+step: 200

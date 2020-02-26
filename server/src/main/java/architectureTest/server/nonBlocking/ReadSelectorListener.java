@@ -1,32 +1,31 @@
 package architectureTest.server.nonBlocking;
 
+import architectureTest.server.ServerStat;
+
 import java.io.IOException;
 import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
 import java.time.Instant;
 import java.util.Iterator;
 import java.util.Set;
 
-public class ReadSelectorListener implements Runnable {
+public class ReadSelectorListener extends SelectorListener implements Runnable {
 
-    private Selector selector;
-
-    public ReadSelectorListener() throws IOException {
-        selector = Selector.open();
-    }
-
-    public Selector getSelector() {
-        return selector;
+    public ReadSelectorListener(ServerStat stat) throws IOException {
+        super(stat);
     }
 
     @Override
     public void run() {
         while (!Thread.interrupted()) {
             try {
-                selector.selectNow();
+                selector.select();
             } catch (IOException e) {
                 System.out.println("Failed to select channels");
+                stat.setNotValid();
+                continue;
             }
+
+            registerChannels(SelectionKey.OP_READ);
             Set<SelectionKey> selectedKeys = selector.selectedKeys();
             Iterator<SelectionKey> keyIterator = selectedKeys.iterator();
             while (keyIterator.hasNext()) {
@@ -38,10 +37,9 @@ public class ReadSelectorListener implements Runnable {
                         boolean keepInSelector = buffers.readToBuffer(key, gotRequestTime);
                         if (!keepInSelector) {
                             key.cancel();
-                            //keyIterator.remove();
-                            continue;
                         }
                     } catch (IOException e) {
+                        stat.setNotValid();
                         System.out.println("Failed to read to buffer");
                     }
                 }

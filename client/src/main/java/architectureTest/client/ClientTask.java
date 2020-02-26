@@ -19,6 +19,8 @@ public class ClientTask implements Runnable {
 
     private volatile double avgRequestTime;
 
+    private volatile boolean statIsValid = true;
+
     private List<Duration> durations = new ArrayList<>();
 
     private List<Long> listToSort;
@@ -69,7 +71,6 @@ public class ClientTask implements Runnable {
         }
         try {
             Request result = Network.parseRequest(socket);
-            System.out.println("Got array sorting result (" + socket.getLocalPort() + ")");
         } catch (IOException e) {
             System.out.println("Failed to get sort results");
             throw e;
@@ -84,28 +85,32 @@ public class ClientTask implements Runnable {
         String host = params.getServerIP();
         int port = params.getPort();
         try (Socket socket = new Socket(host, port)) {
-            System.out.println("Sending sign (" + socket.getLocalPort() + ")");
             Network.sendSign(socket, 3);
             Network.parseRequest(socket);
-            System.out.println("Sent sign (" + socket.getLocalPort() + ")");
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException e) {
+                statIsValid = false;
+                return;
+            }
             long waitTime = params.getDelta();
             for (int i = 0; i < numRequests; i++) {
                 try {
                     sortArray(socket);
                 } catch (IOException e) {
+                    statIsValid = false;
                     return;
                 }
                 try {
                     Thread.sleep(waitTime);
                 } catch (InterruptedException e) {
+                    statIsValid = false;
                     return;
                 }
             }
             try {
-                System.out.println("Sending finish request (" + socket.getLocalPort() + ")");
                 Network.sendSign(socket, 0);
                 Network.parseRequest(socket);
-                System.out.println("Got finish response (" + socket.getLocalPort() + ")");
             } catch (IOException e) {
                 System.out.println("Failed to send finish sign");
             }
@@ -117,5 +122,9 @@ public class ClientTask implements Runnable {
 
     public double getAvgRequestTime() {
         return avgRequestTime;
+    }
+
+    public boolean isStatValid() {
+        return statIsValid;
     }
 }

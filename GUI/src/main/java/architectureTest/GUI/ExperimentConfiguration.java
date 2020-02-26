@@ -186,6 +186,13 @@ public class ExperimentConfiguration {
             }
         }
 
+        for (ClientTask task : tasks) {
+            if (!task.isStatValid()) {
+                System.out.println("Stat is not valid");
+                break;
+            }
+        }
+
         double clientAvgTime = tasks
                 .stream()
                 .mapToDouble(ClientTask::getAvgRequestTime)
@@ -193,6 +200,9 @@ public class ExperimentConfiguration {
                 .orElse(0);
 
         StatResponse statResponse = getServerStat(ip);
+        if (!statResponse.getValid()) {
+            System.out.println("Stat is not valid");
+        }
         Stat stat = new Stat();
         stat.avgSortTime = statResponse.getSortAvg();
         stat.avgProcessTime = statResponse.getProcessAvg();
